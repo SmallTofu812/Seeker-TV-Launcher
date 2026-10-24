@@ -11,11 +11,12 @@ You are helping someone install Seeker TV on their own Google TV over adb. The s
 6. **Run the check after each change.** After every change, read HOME: `adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME` and `adb shell dumpsys activity activities | grep -m1 ResumedActivity`. If HOME is not what the step expects, stop.
 7. **Wait before rebooting.** Android saves enable/disable and HOME changes about 10 s after the command. Wait at least 15 s before `adb reboot`, or the change is lost.
 8. **Panic path.** If the home screen is black, looping (a new activity every fraction of a second in `dumpsys`), or Seeker keeps crashing: stop and run `restore-kit/panic-home.sh`. It re-enables launcherx and setupwraith, makes Google TV HOME, waits 15 s and reboots. Tell the user what happened and show the log.
-9. **No guessing about other TVs.** This was tested on one Hisense Google TV (Android 11). If a command fails or a package name doesn't exist on the user's TV, stop and explain; don't improvise a substitute.
+9. **No guessing about other TVs.** This was tested on one Hisense Google TV (Android 11), and the install plus v0.10.0's background and slideshow on a Chromecast with Google TV (Android 14). If a command fails or a package name doesn't exist on the user's TV, stop and explain; don't improvise a substitute.
 
 ## Facts you'll need
 - App id: `com.seeker.tv`. HOME component: `com.seeker.tv/.Home` (ships disabled; Seeker enables it on `adb shell am broadcast -a com.seeker.tv.HOME_ALIAS --ez enabled true`, because the shell can't enable components on these TVs). The broadcast is handled by Seeker's service, so open Seeker once first.
 - `com.hisense.tv.customerlauncher` is **not** a fallback launcher (no HOME intent filter). Don't rely on it.
 - Settings over adb: `am broadcast -a com.seeker.tv.SET --es name <NAME>`; `--es place <CITY> --es lat <lat> --es lon <lon>`. HOME MODE: `am broadcast -a com.seeker.tv.MODE --es mode wheel|flap|invaders|hunt`.
+- Background (v0.10.0+ builds only): push to `/sdcard/Android/data/com.seeker.tv/files/background` then `am broadcast -a com.seeker.tv.SET --ez background true|false`; slideshow folder `files/backgrounds/`, `--es slideshow <sec>|off`, `--ez fade true|false`. These are settings, not package changes, but still ask first and log the undo.
 - `.env` holds `TV_IP` and `ADB`; the restore-kit scripts read it. Never commit `.env`, snapshots or `INSTALL-LOG.md` contents to a public place: they contain the user's network details.
 - A release APK can't be installed over a self-built debug APK (different signing key). Uninstall first, after making Google TV HOME again.

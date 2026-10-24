@@ -50,6 +50,15 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
     private var weather: Weather? = null
     private val main = Handler(Looper.getMainLooper())
     private var resumed = false
+    private var started = false
+    private var slideQueue = ArrayDeque<java.io.File>()  // shuffled; refilled on the loader thread when empty
+    private var slideLoading = false
+    private val slideTick = object : Runnable {
+        override fun run() {
+            nextSlide()
+            main.postDelayed(this, slideMs())
+        }
+    }
 
     private val weatherTick = object : Runnable {
         override fun run() {
@@ -70,6 +79,7 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
     private val modeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "name") { main.post { view?.setGreeting(greetingText()); settings?.invalidate() }; return@OnSharedPreferenceChangeListener }
         if (key == "weather_rev") { main.post { refetchWeather() }; return@OnSharedPreferenceChangeListener }
+        if (key == "background_rev" || key == "slideshow_sec") { main.post { loadBackground() }; return@OnSharedPreferenceChangeListener }
         if (key != "home_mode") return@OnSharedPreferenceChangeListener
         main.post {
             val s = settings
@@ -101,6 +111,7 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
             allApps = Apps.load(this)
             v.setApps(Apps.wheel(allApps, prefs))
             showHome()
+            loadBackground()
         } catch (e: Exception) {
             Log.e(TAG, "startup failed, showing the fallback list", e)
             view = null
@@ -120,6 +131,8 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
     override fun onStart() {
         super.onStart()
         if (view == null) return
+        started = true
+        if (slideMs() > 0) { main.removeCallbacks(slideTick); main.post(slideTick) }  // a new slide each time HOME shows
         registerReceiver(timeReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_TIME_TICK)
             addAction(Intent.ACTION_TIME_CHANGED)
@@ -147,6 +160,8 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
         if (view != null) {
             unregisterReceiver(timeReceiver)
             main.removeCallbacks(weatherTick)
+            started = false
+            main.removeCallbacks(slideTick)  // no decoding while another app is in front
             view?.resetLaunch()  // come back to a clean wheel
             view?.resetModes()
             gamesToStart()       // the games: HOME always shows START, never mid-game
@@ -368,6 +383,42 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
         val w = weather ?: return
         view?.setWeather(w.cached())
         w.fetch { view?.setWeather(it) }
+    }
+
+    /** Slideshow interval from `SET --es slideshow <seconds>|off`; 0 = off (single background). */
+    private fun slideMs(): Long = prefs.getInt("slideshow_sec", 0) * 1000L
+
+    /** Decodes the wheel background off the main thread; also creates the files dir adb pushes into. */
+    private fun loadBackground() {
+        main.removeCallbacks(slideTick)
+        slideQueue = ArrayDeque()  // re-list the folder: new photos or a new interval
+        if (slideMs() > 0) { if (started) main.post(slideTick); return }
+        val app = applicationContext
+        Thread {
+            val b = Background.load(app)
+            main.post { view?.setBackgroundImage(b) }
+        }.start()
+    }
+
+    /** Next shuffled slide, cross-faded in; falls back to the single background if the folder is empty. */
+    private fun nextSlide() {
+        if (slideLoading) return
+        slideLoading = true
+        val app = applicationContext
+        val q = slideQueue
+        Thread {
+            if (q.isEmpty()) {
+                val all = Background.slides(app)
+                Background.pruneCache(app, all)
+                q.addAll(all.shuffled())
+            }
+            val f = q.removeFirstOrNull()
+            val b = if (f != null) Background.loadSlide(app, f) else Background.load(app)
+            main.post {
+                slideLoading = false
+                if (b != null || f == null) view?.setBackgroundImage(b, fade = f != null && prefs.getBoolean("slideshow_fade", true))
+            }
+        }.start()
     }
 
     /** One line of text from the TV's on-screen keyboard. [done] runs only on OK. */

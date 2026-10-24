@@ -16,8 +16,8 @@ android {
         applicationId = "com.seeker.tv"
         minSdk = 30
         targetSdk = 34
-        versionCode = 13
-        versionName = "0.9.0"
+        versionCode = 14
+        versionName = "0.10.0"
     }
 
     // Each flavor compiles only its game modes; WHEEL is in all of them. Same applicationId for all,

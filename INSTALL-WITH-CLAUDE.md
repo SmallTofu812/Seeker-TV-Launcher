@@ -49,6 +49,36 @@ Record every change and its undo in INSTALL-LOG.md. If the home screen breaks at
 
 Why this order: setupwraith guards launcherx. If launcherx is disabled while setupwraith is on, setupwraith's RecoveryActivity grabs HOME and loops. Re-enabling is the reverse: launcherx first, then setupwraith.
 
+## Optional: background and slideshow (v0.10.0)
+
+v0.10.0 adds a picture or a photo slideshow behind the wheel (details and measured cost: [README](README.md#background-and-slideshow-v0100)). It was created and tested on a Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM). The v0.9.0 release APKs don't have it, so Claude Code builds the app on your computer first. It can set up Java 17 and the Android SDK in your home folder without admin rights (about 1 to 2 GB).
+
+**CPU strain, in short:** none while idle (about 0.1%, the same as without a background); a 30-second slideshow averages about **2% CPU** with the fade or about **0.6%** with `fade false`, as a short burst at each photo change. Memory: about 80 to 110 MB while a slideshow runs, against about 26 MB for the plain wheel and about 305 MB for Google TV's own launcher.
+
+Already running Seeker from a release APK? Paste this after the install is done:
+
+```
+Read CLAUDE.md and INSTALL-WITH-CLAUDE.md. I want the v0.10.0 wheel background.
+Build seeker-all-0.10.0-debug.apk (set up the build tools if they're missing).
+Then switch my TV from the release APK to that build: snapshot, make Google TV
+HOME, uninstall, install, redo the grants and the HOME steps, and set my name
+and city again from INSTALL-LOG.md. Then push this image as the background:
+<path to an image>. (Or, for a slideshow: push the photos in <folder> and turn
+on the slideshow every 30 seconds.)
+```
+
+Uninstalling clears Seeker's settings, so after the switch set your app order and hidden apps again on the TV. Builds from the same computer later install over it with `adb install -r` (no uninstall).
+
+| Step | Command (Claude runs it) | Undo |
+|---|---|---|
+| Google TV HOME again | `adb shell pm enable com.google.android.apps.tv.launcherx`, then `adb shell cmd package set-home-activity --user 0 com.google.android.apps.tv.launcherx/.home.HomeActivity`, wait 15 s | `adb shell pm disable-user --user 0 com.google.android.apps.tv.launcherx`, `set-home-activity com.seeker.tv/.Home` |
+| Remove the release APK | `adb uninstall com.seeker.tv` | `adb install seeker-<flavor>-0.9.0.apk` |
+| Install your build | `adb install launcher/app/build/outputs/apk/all/debug/seeker-all-0.10.0-debug.apk` | `adb uninstall com.seeker.tv` |
+| Back to Seeker HOME | grants, first start, HOME entry on, disable launcherx, make Seeker HOME: same rows as the table above | `restore-kit/panic-home.sh` |
+| One image | `adb push <image> /sdcard/Android/data/com.seeker.tv/files/background`, then `adb shell am broadcast -a com.seeker.tv.SET --ez background true` | `adb shell am broadcast -a com.seeker.tv.SET --ez background false` |
+| Slideshow | `adb push <folder>/. /sdcard/Android/data/com.seeker.tv/files/backgrounds/`, then `adb shell am broadcast -a com.seeker.tv.SET --es slideshow 30` | `adb shell am broadcast -a com.seeker.tv.SET --es slideshow off` |
+| Cut instead of fade (optional) | `adb shell am broadcast -a com.seeker.tv.SET --ez fade false` | `... --ez fade true` |
+
 ## If something goes wrong
 
 - **Black screen, looping, or the home screen keeps crashing:** run `restore-kit/panic-home.sh` (from this folder). It turns Google TV's home screen back on, makes it HOME, waits 15 s and reboots. Give the TV a minute.
