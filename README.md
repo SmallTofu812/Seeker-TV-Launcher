@@ -17,7 +17,7 @@ Every build has the wheel. The game modes are optional (see [Flavors](#flavors))
 | **INVADERS**. Your apps are the invaders. Shoot one to open it; the meteor is Settings. | ![Invaders](docs/screens/invaders.png) |
 | **HUNT**. An 8-bit duck hunt: each duck is an app. Left/Right picks a duck, tap OK to shoot (1 in 4 hits), hold OK to miss on purpose. The dog pops up to react. | ![Hunt](docs/screens/hunt.png) |
 
-Settings (gear on the wheel, SETTINGS on each game's start screen): SYSTEM SETTINGS, INPUTS, HOME MODE, SOUND, **NAME** (the greeting is HELLO &lt;NAME&gt;, default SEEKER), **WEATHER LOCATION** (any city, default Denver), HIDDEN APPS, ABOUT.
+Settings (gear on the wheel, SETTINGS on each game's start screen): SYSTEM SETTINGS, INPUTS, HOME MODE, SOUND, **NAME** (the greeting is HELLO &lt;NAME&gt;, default SEEKER), **WEATHER LOCATION** (any city, default Denver), HIDDEN APPS, ABOUT. The wheel's [background and slideshow](#background-and-slideshow-v0100) are set over adb.
 
 ## Flavors
 
@@ -33,6 +33,44 @@ One APK per flavor, all with the same app id (`com.seeker.tv`), so installing on
 
 Download them from [Releases](../../releases).
 
+## Background and slideshow (v0.10.0)
+
+New in v0.10.0: an optional picture behind the wheel instead of the dot grid, either **one image** or a **slideshow** of a whole folder (shuffled, a new photo every N seconds, with a short cross-fade). Use your own wallpaper, or family photos copied off a NAS or Plex server. Only the wheel gets the background; Settings and the game modes keep their own look.
+
+**How it looks after:** each image is rotated using its EXIF tag (phone photos aren't sideways), center-cropped to 16:9 and darkened 75% so the white dot text stays readable.
+
+### Do it yourself
+
+1. **Get a v0.10.0 build.** The v0.9.0 APKs don't have this. Build it (see [Build from source](#build-from-source)): `./gradlew assembleAllDebug` gives `launcher/app/build/outputs/apk/all/debug/seeker-all-0.10.0-debug.apk`.
+   A debug build is signed with your own key, so it **can't install over a release APK**. Make Google TV HOME again, `adb uninstall com.seeker.tv`, install your build, then redo the HOME steps (exactly as in [INSTALL-WITH-CLAUDE.md](INSTALL-WITH-CLAUDE.md#optional-background-and-slideshow-v0100), which has a ready-made prompt). Uninstalling clears Seeker's settings: set your name, city, app order and hidden apps again. Later builds from the same computer install over it with `adb install -r`.
+2. **One image:**
+   ```bash
+   adb push wallpaper.jpg /sdcard/Android/data/com.seeker.tv/files/background
+   adb shell am broadcast -a com.seeker.tv.SET --ez background true      # false removes it
+   ```
+3. **Slideshow:** copy a folder of photos (JPEG, PNG or WebP) into Seeker's own folder, then turn it on:
+   ```bash
+   adb push my-photos/. /sdcard/Android/data/com.seeker.tv/files/backgrounds/
+   adb shell am broadcast -a com.seeker.tv.SET --es slideshow 30          # seconds (min 5), or off
+   adb shell am broadcast -a com.seeker.tv.SET --ez fade false            # optional: cut instead of fade
+   ```
+   Added or removed photos? Push them, then `SET --ez background true` re-reads the folder. With the slideshow `off`, the single image (if any) comes back.
+
+No storage permission is needed: `Android/data/com.seeker.tv/` is the app's own folder, and adb's shell can write to it. Uninstalling Seeker deletes it.
+
+### How much does it cost?
+
+Measured on a Chromecast with Google TV (Android 14), debug build, 79 phone photos (46 MB):
+
+| | CPU |
+|---|---|
+| Idle on the wheel, any background | about 0.1% (the wheel only redraws on input) |
+| Per slide, first loop (full-size photo decoded and cached) | about 1 s |
+| Per slide, cached, with the 0.5 s fade | about 0.6 s, so about 2% average at 30 s |
+| Per slide, cached, `fade false` | about 0.18 s, so about 0.6% average at 30 s |
+
+The slideshow stops while another app (or the screensaver) is in front. Cached slides take about 220 KB each in the app's cache (17 MB for 79 photos); Android may clear it under storage pressure and Seeker rebuilds it. Memory is higher than the plain wheel (two full-screen bitmaps during a fade), but still a fraction of Google TV's launcher.
+
 ## How it works
 
 - **adb over Wi-Fi.** Everything is done from a computer with `adb`: install the APK, grant two optional permissions, make Seeker HOME. Nothing is rooted.
@@ -41,13 +79,6 @@ Download them from [Releases](../../releases).
 - **The HOME switch.** Seeker ships its HOME entry (`.Home`) disabled, because an enabled HOME candidate can make Android drop your current preferred HOME. Seeker turns it on itself when it receives `com.seeker.tv.HOME_ALIAS`, then `cmd package set-home-activity` makes it HOME.
 - **RAM.** On the reference TV, launcherx plus its `coreservices` process used about 305 MB RSS. Seeker uses about 26 MB PSS on the wheel and 35 to 47 MB PSS while a game is being played. Free RAM two minutes after boot went from 91 MB (stock) to 163 MB with Seeker as HOME. (Android quickly fills freed RAM with cached apps, so treat these as rough.)
 - **Weather** comes from [Open-Meteo](https://open-meteo.com) (no API key). The city you type is looked up with Open-Meteo's geocoder; only the coordinates are stored, on the TV.
-- **Wheel background (optional).** One image or a slideshow behind the wheel, pushed over adb into Seeker's own folder (no storage permission). Images are center-cropped to 16:9, dimmed 75% so the dot text stays readable, rotated by their EXIF tag, and slides are cached as 1920x1080 JPEGs after their first showing. The slideshow pauses while another app is in front.
-  ```bash
-  adb push bg.jpg /sdcard/Android/data/com.seeker.tv/files/background
-  adb shell am broadcast -a com.seeker.tv.SET --ez background true     # false removes it
-  adb push photos/. /sdcard/Android/data/com.seeker.tv/files/backgrounds/
-  adb shell am broadcast -a com.seeker.tv.SET --es slideshow 30        # seconds (min 5), or off
-  ```
 - **Optional permissions**, both granted over adb: `WRITE_SECURE_SETTINGS` lets Seeker keep animations at 0.5x (snappier), and the `SYSTEM_ALERT_WINDOW` app-op lets `com.seeker.tv.NOTIFY` broadcasts show as toasts over other apps.
 
 ## Requirements

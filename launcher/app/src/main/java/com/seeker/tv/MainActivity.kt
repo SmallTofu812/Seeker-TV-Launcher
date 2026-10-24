@@ -416,7 +416,7 @@ class MainActivity : Activity(), SeekerView.Host, SettingsView.Host, GameHost {
             val b = if (f != null) Background.loadSlide(app, f) else Background.load(app)
             main.post {
                 slideLoading = false
-                if (b != null || f == null) view?.setBackgroundImage(b, fade = f != null)
+                if (b != null || f == null) view?.setBackgroundImage(b, fade = f != null && prefs.getBoolean("slideshow_fade", true))
             }
         }.start()
     }

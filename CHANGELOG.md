@@ -1,9 +1,15 @@
 # Changelog
 
-## Unreleased
+## v0.10.0 (2026-10-24)
 
-- **Wheel background:** an optional image behind the wheel instead of the dot grid, pushed over adb and loaded with `SET --ez background true|false`.
-- **Slideshow:** `SET --es slideshow <seconds>|off` cycles the images in `files/backgrounds/`, shuffled, with a 500 ms cross-fade. Pauses while Seeker isn't in front; slides are cached as ready-made 1920x1080 JPEGs.
+Wheel background and photo slideshow.
+
+- **Background image:** an optional picture behind the wheel instead of the dot grid. Push it to `/sdcard/Android/data/com.seeker.tv/files/background` and send `SET --ez background true` (`false` removes it). No storage permission needed.
+- **Slideshow:** push a folder of photos to `files/backgrounds/` and send `SET --es slideshow 30` (seconds, min 5, or `off`). Shuffled, 500 ms cross-fade (`SET --ez fade false` for a cut), paused while another app or the screensaver is in front.
+- Images are EXIF-rotated, center-cropped to 16:9 and dimmed 75% so the dot text stays readable. Slides are cached as 1920x1080 JPEGs after their first showing, so later loops are cheap.
+- Measured on a Chromecast with Google TV: idle cost unchanged (about 0.1% CPU); a 30 s slideshow averages about 2% CPU with the fade, about 0.6% without.
+- **Do it yourself:** see README > Background and slideshow, or the ready-made prompt in INSTALL-WITH-CLAUDE.md. Build from source (`./gradlew assembleAllDebug`); a self-built APK can't install over a release APK, so uninstall first after making Google TV HOME again.
+- No v0.10.0 release APKs yet: release signing needs the project's key.
 
 ## v0.9.0 (2026-10-22)
 
