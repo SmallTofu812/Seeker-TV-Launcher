@@ -45,8 +45,8 @@ New in v0.10.0: an optional picture behind the wheel instead of the dot grid, ei
 
 ### Do it yourself
 
-1. **Get a v0.10.0 build.** The v0.9.0 APKs don't have this. Build it (see [Build from source](#build-from-source)): `./gradlew assembleAllDebug` gives `launcher/app/build/outputs/apk/all/debug/seeker-all-0.10.0-debug.apk`.
-   A debug build is signed with your own key, so it **can't install over a release APK**. Make Google TV HOME again, `adb uninstall com.seeker.tv`, install your build, then redo the HOME steps (exactly as in [INSTALL-WITH-CLAUDE.md](INSTALL-WITH-CLAUDE.md#optional-background-and-slideshow-v0100), which has a ready-made prompt). Uninstalling clears Seeker's settings: set your name, city, app order and hidden apps again. Later builds from the same computer install over it with `adb install -r`.
+1. **Get v0.10.0.** The v0.9.0 APKs don't have this. Download `seeker-all-0.10.0.apk` (every mode) or `seeker-wheel-0.10.0.apk` (smallest) from this fork's [Releases](../../releases/tag/v0.10.0), or build any flavor yourself (see [Build from source](#build-from-source)): `./gradlew assembleAllDebug` gives `launcher/app/build/outputs/apk/all/debug/seeker-all-0.10.0-debug.apk`.
+   The v0.10.0 APKs are signed with this fork's key, and a build of your own with yours, so neither **can install over the original v0.9.0 APKs**. Make Google TV HOME again, `adb uninstall com.seeker.tv`, install, then redo the HOME steps (exactly as in [INSTALL-WITH-CLAUDE.md](INSTALL-WITH-CLAUDE.md#optional-background-and-slideshow-v0100), which has a ready-made prompt). Uninstalling clears Seeker's settings: set your name, city, app order and hidden apps again. Later APKs signed with the same key install over it with `adb install -r`.
 2. **One image:**
    ```bash
    adb push wallpaper.jpg /sdcard/Android/data/com.seeker.tv/files/background
