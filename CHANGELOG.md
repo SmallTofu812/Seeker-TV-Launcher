@@ -2,12 +2,12 @@
 
 ## v0.10.0 (2026-10-24)
 
-Wheel background and photo slideshow.
+Wheel background and photo slideshow. Created and tested on a Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM).
 
 - **Background image:** an optional picture behind the wheel instead of the dot grid. Push it to `/sdcard/Android/data/com.seeker.tv/files/background` and send `SET --ez background true` (`false` removes it). No storage permission needed.
 - **Slideshow:** push a folder of photos to `files/backgrounds/` and send `SET --es slideshow 30` (seconds, min 5, or `off`). Shuffled, 500 ms cross-fade (`SET --ez fade false` for a cut), paused while another app or the screensaver is in front.
 - Images are EXIF-rotated, center-cropped to 16:9 and dimmed 75% so the dot text stays readable. Slides are cached as 1920x1080 JPEGs after their first showing, so later loops are cheap.
-- Measured on a Chromecast with Google TV: idle cost unchanged (about 0.1% CPU); a 30 s slideshow averages about 2% CPU with the fade, about 0.6% without.
+- **CPU strain** (measured on that Chromecast): idle cost unchanged (about 0.1% CPU); a 30 s slideshow averages about 2% CPU with the fade, about 0.6% without (about 0.6 s and 0.18 s of work per photo change; about 1 s per photo on the first loop, while it's cached). Memory about 80 to 110 MB PSS while a slideshow runs (plain wheel about 26 MB).
 - **Do it yourself:** see README > Background and slideshow, or the ready-made prompt in INSTALL-WITH-CLAUDE.md. Build from source (`./gradlew assembleAllDebug`); a self-built APK can't install over a release APK, so uninstall first after making Google TV HOME again.
 - No v0.10.0 release APKs yet: release signing needs the project's key.
 

@@ -2,7 +2,7 @@
 
 A small, fast home screen for Google TV, drawn entirely on a canvas: a dot-matrix app wheel, plus three optional arcade "home modes" where you pick an app by playing a few seconds of a game. It replaces Google TV's own launcher, which frees a few hundred MB of RAM on low-memory TVs.
 
-Built and tested on one TV: a Hisense 55A53FUA (Google TV, Android 11, 2 GB RAM). It should work on other Google TV / Android TV 11+ devices, but nothing else has been tried.
+Built and tested on a Hisense 55A53FUA (Google TV, Android 11, 2 GB RAM). The full install also works on a Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM), which is where v0.10.0's [background and slideshow](#background-and-slideshow-v0100) were built and tested. It should work on other Google TV / Android TV 11+ devices, but nothing else has been tried.
 
 > **Warning.** Making Seeker your HOME screen means disabling two Google system packages (`launcherx` and `setupwraith`) over adb. It's reversible: `restore-kit/panic-home.sh` puts Google TV's home screen back, and a factory reset restores everything to stock. Do it only if you're comfortable with adb, and take the snapshot first.
 
@@ -35,7 +35,11 @@ Download them from [Releases](../../releases).
 
 ## Background and slideshow (v0.10.0)
 
+*Created and tested on a Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM).*
+
 New in v0.10.0: an optional picture behind the wheel instead of the dot grid, either **one image** or a **slideshow** of a whole folder (shuffled, a new photo every N seconds, with a short cross-fade). Use your own wallpaper, or family photos copied off a NAS or Plex server. Only the wheel gets the background; Settings and the game modes keep their own look.
+
+**CPU strain, in short:** none while idle (about 0.1%, the same as without a background); a 30-second slideshow averages about **2% CPU** with the fade or about **0.6%** with `fade false`, as a short burst at each photo change. Memory: about 80 to 110 MB while a slideshow runs, against about 26 MB for the plain wheel and about 305 MB for Google TV's own launcher. Full numbers: [How much does it cost?](#how-much-does-it-cost).
 
 **How it looks after:** each image is rotated using its EXIF tag (phone photos aren't sideways), center-cropped to 16:9 and darkened 75% so the white dot text stays readable.
 
@@ -60,7 +64,7 @@ No storage permission is needed: `Android/data/com.seeker.tv/` is the app's own 
 
 ### How much does it cost?
 
-Measured on a Chromecast with Google TV (Android 14), debug build, 79 phone photos (46 MB):
+Measured on the Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM), debug build, 79 phone photos (46 MB):
 
 | | CPU |
 |---|---|
@@ -69,7 +73,7 @@ Measured on a Chromecast with Google TV (Android 14), debug build, 79 phone phot
 | Per slide, cached, with the 0.5 s fade | about 0.6 s, so about 2% average at 30 s |
 | Per slide, cached, `fade false` | about 0.18 s, so about 0.6% average at 30 s |
 
-The slideshow stops while another app (or the screensaver) is in front. Cached slides take about 220 KB each in the app's cache (17 MB for 79 photos); Android may clear it under storage pressure and Seeker rebuilds it. Memory is higher than the plain wheel (two full-screen bitmaps during a fade), but still a fraction of Google TV's launcher.
+The slideshow stops while another app (or the screensaver) is in front. Cached slides take about 220 KB each in the app's cache (17 MB for 79 photos); Android may clear it under storage pressure and Seeker rebuilds it. Memory: about 80 MB PSS with a 30 s slideshow and up to about 110 MB with fast 5 s slides (two full-screen bitmaps during a fade), against about 26 MB for the plain wheel and about 305 MB for Google TV's launcher.
 
 ## How it works
 

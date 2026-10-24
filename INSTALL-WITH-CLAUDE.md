@@ -51,7 +51,9 @@ Why this order: setupwraith guards launcherx. If launcherx is disabled while set
 
 ## Optional: background and slideshow (v0.10.0)
 
-v0.10.0 adds a picture or a photo slideshow behind the wheel (details and measured cost: [README](README.md#background-and-slideshow-v0100)). The v0.9.0 release APKs don't have it, so Claude Code builds the app on your computer first. It can set up Java 17 and the Android SDK in your home folder without admin rights (about 1 to 2 GB).
+v0.10.0 adds a picture or a photo slideshow behind the wheel (details and measured cost: [README](README.md#background-and-slideshow-v0100)). It was created and tested on a Chromecast with Google TV (4K, `sabrina`, Android 14, 2 GB RAM). The v0.9.0 release APKs don't have it, so Claude Code builds the app on your computer first. It can set up Java 17 and the Android SDK in your home folder without admin rights (about 1 to 2 GB).
+
+**CPU strain, in short:** none while idle (about 0.1%, the same as without a background); a 30-second slideshow averages about **2% CPU** with the fade or about **0.6%** with `fade false`, as a short burst at each photo change. Memory: about 80 to 110 MB while a slideshow runs, against about 26 MB for the plain wheel and about 305 MB for Google TV's own launcher.
 
 Already running Seeker from a release APK? Paste this after the install is done:
 
