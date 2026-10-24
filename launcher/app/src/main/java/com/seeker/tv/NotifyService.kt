@@ -36,6 +36,8 @@ class NotifyService : Service() {
         /**
          * `am broadcast -a com.seeker.tv.SET --es name ALEX` sets NAME;
          * `--es place PARIS --es lat 48.8566 --es lon 2.3522` sets WEATHER LOCATION. Either or both.
+         * `--ez background true` reloads the wheel background (see [Background]); `false` removes it.
+         * `--es slideshow 30` cycles backgrounds/ every 30 s (min 5); `off` goes back to the single image.
          */
         const val ACTION_SET = "com.seeker.tv.SET"
         private const val CHANNEL = "seeker"
@@ -85,6 +87,17 @@ class NotifyService : Service() {
                     Log.i(TAG, "SET: weather location")
                 } else if (place != null || lat != null || lon != null) {
                     Log.w(TAG, "SET: weather location needs place, lat and lon")
+                }
+                i.getStringExtra("slideshow")?.let {
+                    val sec = if (it.equals("off", true)) 0 else it.toIntOrNull()?.coerceAtLeast(5)
+                    if (sec == null) { Log.w(TAG, "SET: slideshow needs seconds or off"); return@let }
+                    prefs.edit().putInt("slideshow_sec", sec).apply()
+                    Log.i(TAG, "SET: slideshow = $sec s")
+                }
+                if (i.hasExtra("background")) {
+                    if (!i.getBooleanExtra("background", false)) Background.clear(c)
+                    prefs.edit().putLong("background_rev", System.currentTimeMillis()).apply()  // MainActivity reloads
+                    Log.i(TAG, "SET: background")
                 }
                 return
             }

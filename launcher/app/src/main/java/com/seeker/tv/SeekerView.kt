@@ -1,5 +1,7 @@
 package com.seeker.tv
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -156,6 +158,11 @@ class SeekerView(ctx: Context, private val host: Host) : View(ctx) {
         }
     }
     private val glowPaint = Paint()
+    private var bgImage: Bitmap? = null   // Background.load(): 1920x1080, dim baked in; replaces the dot grid
+    private var bgPrev: Bitmap? = null    // the slide fading out
+    private var bgFade = 1f
+    private var bgAnim: ValueAnimator? = null
+    private val bgPaint = Paint()
     private val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 2f
@@ -206,6 +213,22 @@ class SeekerView(ctx: Context, private val host: Host) : View(ctx) {
     fun setGreeting(g: String) { greeting = g; panel = null; invalidate() }
     fun setWeather(w: Weather.Now) { weather = w; panel = null; invalidate() }
     fun tick() { panel = null; invalidate() }
+    /** [fade]: cross-fade from the current image for 500 ms (slideshow); otherwise swap at once. */
+    fun setBackgroundImage(b: Bitmap?, fade: Boolean = false) {
+        bgAnim?.cancel()
+        val old = bgImage
+        bgImage = b
+        if (!fade || old == null || b == null) { bgPrev = null; bgFade = 1f; invalidate(); return }
+        bgPrev = old
+        bgAnim = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = ms(500)
+            addUpdateListener { bgFade = it.animatedValue as Float; invalidate() }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(a: Animator) { bgPrev = null; bgFade = 1f }
+            })
+            start()
+        }
+    }
 
     /** Called when we come back to the front (or the launch never happened): clear the takeover. */
     fun resetLaunch() {
@@ -433,7 +456,15 @@ class SeekerView(ctx: Context, private val host: Host) : View(ctx) {
     override fun onDraw(canvas: Canvas) {
         canvas.save()
         canvas.scale(width / W, height / H)
-        canvas.drawRect(0f, 0f, W, H, gridPaint)
+        val bg = bgImage
+        val prev = bgPrev
+        if (bg == null) canvas.drawRect(0f, 0f, W, H, gridPaint)
+        else if (prev == null) canvas.drawBitmap(bg, 0f, 0f, null)
+        else {
+            canvas.drawBitmap(prev, 0f, 0f, null)
+            bgPaint.alpha = (bgFade * 255).toInt()
+            canvas.drawBitmap(bg, 0f, 0f, bgPaint)
+        }
         drawGlow(canvas)
         drawPanel(canvas)
         drawCursor(canvas)

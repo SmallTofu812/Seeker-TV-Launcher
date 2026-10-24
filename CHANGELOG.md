@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Wheel background:** an optional image behind the wheel instead of the dot grid, pushed over adb and loaded with `SET --ez background true|false`.
+- **Slideshow:** `SET --es slideshow <seconds>|off` cycles the images in `files/backgrounds/`, shuffled, with a 500 ms cross-fade. Pauses while Seeker isn't in front; slides are cached as ready-made 1920x1080 JPEGs.
+
 ## v0.9.0 (2026-10-22)
 
 First public release.

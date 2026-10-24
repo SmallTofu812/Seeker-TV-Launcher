@@ -41,6 +41,13 @@ Download them from [Releases](../../releases).
 - **The HOME switch.** Seeker ships its HOME entry (`.Home`) disabled, because an enabled HOME candidate can make Android drop your current preferred HOME. Seeker turns it on itself when it receives `com.seeker.tv.HOME_ALIAS`, then `cmd package set-home-activity` makes it HOME.
 - **RAM.** On the reference TV, launcherx plus its `coreservices` process used about 305 MB RSS. Seeker uses about 26 MB PSS on the wheel and 35 to 47 MB PSS while a game is being played. Free RAM two minutes after boot went from 91 MB (stock) to 163 MB with Seeker as HOME. (Android quickly fills freed RAM with cached apps, so treat these as rough.)
 - **Weather** comes from [Open-Meteo](https://open-meteo.com) (no API key). The city you type is looked up with Open-Meteo's geocoder; only the coordinates are stored, on the TV.
+- **Wheel background (optional).** One image or a slideshow behind the wheel, pushed over adb into Seeker's own folder (no storage permission). Images are center-cropped to 16:9, dimmed 75% so the dot text stays readable, rotated by their EXIF tag, and slides are cached as 1920x1080 JPEGs after their first showing. The slideshow pauses while another app is in front.
+  ```bash
+  adb push bg.jpg /sdcard/Android/data/com.seeker.tv/files/background
+  adb shell am broadcast -a com.seeker.tv.SET --ez background true     # false removes it
+  adb push photos/. /sdcard/Android/data/com.seeker.tv/files/backgrounds/
+  adb shell am broadcast -a com.seeker.tv.SET --es slideshow 30        # seconds (min 5), or off
+  ```
 - **Optional permissions**, both granted over adb: `WRITE_SECURE_SETTINGS` lets Seeker keep animations at 0.5x (snappier), and the `SYSTEM_ALERT_WINDOW` app-op lets `com.seeker.tv.NOTIFY` broadcasts show as toasts over other apps.
 
 ## Requirements
